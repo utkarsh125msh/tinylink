@@ -1,5 +1,5 @@
 // import { NextResponse } from 'next/server';
-// import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 // export async function GET(
 //     request: Request,
@@ -39,26 +39,25 @@
 //         console.error('Redirect error', err);
 //         return new Response('Internal Server Error', { status: 500 });
 //     }
-// }
-import { prisma } from "@/lib/prisma";
+// }import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  context: { params: Promise<{ code: string }> }
+  { params }: { params: { code: string } }
 ) {
-  const { code } = await context.params;
-
+  // Await params directly here
+  const { code } = await params;
+  
   if (!/^[A-Za-z0-9]{6,8}$/.test(code)) {
     return new NextResponse("Not found", { status: 404 });
   }
-
+  
   try {
     const result = await prisma.$transaction(async (tx) => {
       const link = await tx.link.findUnique({ where: { code } });
-
       if (!link || link.deleted) return null;
-
+      
       await tx.link.update({
         where: { code },
         data: {
@@ -66,14 +65,14 @@ export async function GET(
           lastClicked: new Date(),
         },
       });
-
+      
       return link;
     });
-
+    
     if (!result) {
       return new NextResponse("Not found", { status: 404 });
     }
-
+    
     return NextResponse.redirect(result.target, { status: 302 });
   } catch (err) {
     console.error("Redirect error:", err);
