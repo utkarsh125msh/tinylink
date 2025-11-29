@@ -121,11 +121,12 @@ npx prisma migrate deploy
 src/
 ├── app/
 │   ├── api/
-│      └── links/
-│          ├── route.ts          # Create & list links
-│          └── [code]/
-│              └── route.ts      # Get & delete link
-│   
+│   │   └── links/
+│   │       ├── route.ts          # Create & list links
+│   │       └── [code]/
+│   │           └── route.ts      # Get & delete link
+│   └── [code]/
+│       └── route.ts              # Redirect handler
 ├── lib/
 │   ├── prisma.ts                 # Prisma client
 │   ├── codegen.ts                # Code generator
