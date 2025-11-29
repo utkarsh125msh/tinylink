@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TinyLink — URL Shortener
 
-## Getting Started
+A production-ready URL shortening service built with **Next.js 16**, **Prisma**, and **PostgreSQL**.
 
-First, run the development server:
+## Features
+
+- 🔗 Shorten URLs with custom or auto-generated codes
+- 📊 Click tracking with atomic transactions
+- 🗑️ Soft delete (no data loss)
+- ⚡ Fast redirects with collision handling
+- 🌐 Serverless-ready architecture
+
+## Tech Stack
+
+- **Frontend:** Next.js 16 (App Router), React, TailwindCSS
+- **Backend:** Next.js API Routes
+- **Database:** PostgreSQL (Neon)
+- **ORM:** Prisma
+
+## Quick Start
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/yourusername/tinylink.git
+cd tinylink
+npm install
+```
+
+### 2. Setup Database
+
+Create a `.env` file:
+
+```env
+DATABASE_URL="your-postgresql-connection-string"
+```
+
+Run migrations:
+
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
+### 3. Start Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API Endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/links` | Create short link |
+| `GET` | `/api/links` | List all links |
+| `GET` | `/api/links/:code` | Get link details |
+| `DELETE` | `/api/links/:code` | Soft delete link |
+| `GET` | `/:code` | Redirect to target URL |
 
-## Learn More
+## Usage Examples
 
-To learn more about Next.js, take a look at the following resources:
+### Create a Short Link
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+curl -X POST http://localhost:3000/api/links \
+  -H "Content-Type: application/json" \
+  -d '{"target": "https://example.com"}'
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Create with Custom Code
 
-## Deploy on Vercel
+```bash
+curl -X POST http://localhost:3000/api/links \
+  -H "Content-Type: application/json" \
+  -d '{"target": "https://example.com", "code": "custom"}'
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Use the Short Link
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Visit: `http://localhost:3000/abc123`
+
+## Database Schema
+
+```prisma
+model Link {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  target      String
+  clicks      Int       @default(0)
+  createdAt   DateTime  @default(now())
+  lastClicked DateTime?
+  deleted     Boolean   @default(false)
+}
+```
+
+## Deployment
+
+### Vercel + Neon
+
+1. Push code to GitHub
+2. Import project in Vercel
+3. Add environment variable: `DATABASE_URL`
+4. Deploy migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+## Validation Rules
+
+- ✅ URLs must start with `http://` or `https://`
+- ✅ Codes must be alphanumeric, 6-8 characters
+- ✅ Auto-generated codes have collision retry (5 attempts)
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│      └── links/
+│          ├── route.ts          # Create & list links
+│          └── [code]/
+│              └── route.ts      # Get & delete link
+│   
+├── lib/
+│   ├── prisma.ts                 # Prisma client
+│   ├── codegen.ts                # Code generator
+│   └── validators.ts             # Input validation
+prisma/
+└── schema.prisma                 # Database schema
+```
+
+---
+
+Built with ❤️ using Next.js 16 and Prisma
