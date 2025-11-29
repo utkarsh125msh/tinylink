@@ -8,28 +8,32 @@ import { prisma } from '@/lib/prisma';
 import { isValidCode } from '@/lib/validators';
 
 export async function DELETE(
-    _req: Request,
-    props: { params: Promise<{ code: string }> }
+  req: Request,
+  context: { params: Promise<{ code: string }> }
 ) {
-    const params = await props.params;
-    const code = params.code;
-    if (!isValidCode(code)) return NextResponse.json({ error: 'Invalid code format' }, { status: 400 });
+  const { code } = await context.params;
 
-    try {
-        // Soft-delete: mark deleted = true so history is preserved
-        const existing = await prisma.link.findUnique({ where: { code } });
-        if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!isValidCode(code)) {
+    return NextResponse.json({ error: "Invalid code format" }, { status: 400 });
+  }
 
-        await prisma.link.update({
-            where: { code },
-            data: { deleted: true },
-        });
+  try {
+    const existing = await prisma.link.findUnique({ where: { code } });
 
-        return new Response(null, { status: 204 });
-    } catch (err) {
-        console.error('DELETE /api/links/:code error', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    await prisma.link.update({
+      where: { code },
+      data: { deleted: true },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    console.error("DELETE route error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function GET(
